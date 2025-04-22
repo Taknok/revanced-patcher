@@ -5,6 +5,7 @@ import java.io.Closeable
 import java.io.File
 import java.io.InputStream
 import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
@@ -13,6 +14,12 @@ class Document internal constructor(
     inputStream: InputStream,
 ) : Document by DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream), Closeable {
     private var file: File? = null
+    private val isAndroid = try {
+        Class.forName("android.os.Build")
+        true
+    } catch (e: ClassNotFoundException) {
+        false
+    }
 
     init {
         normalize()
@@ -35,9 +42,11 @@ class Document internal constructor(
             }
 
             it.outputStream().use { stream ->
-                TransformerFactory.newInstance()
-                    .newTransformer()
-                    .transform(DOMSource(this), StreamResult(stream))
+                val transformer = TransformerFactory.newInstance().newTransformer()
+                if (isAndroid) {
+                    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-16")
+                }
+                transformer.transform(DOMSource(this), StreamResult(stream))
             }
         }
     }
