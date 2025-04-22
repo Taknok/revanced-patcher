@@ -4,7 +4,9 @@ import org.w3c.dom.Document
 import java.io.Closeable
 import java.io.File
 import java.io.InputStream
+import java.io.StringWriter
 import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
@@ -34,10 +36,18 @@ class Document internal constructor(
                 readerCount.remove(it)
             }
 
+            val writer = StringWriter()
+            val transformer = TransformerFactory.newInstance().newTransformer()
+
+            // we do not want to have a declaration with encoding="UTF-16" to prevent auto-detection
+            // of the encoding
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-16")
+
+            transformer.transform(DOMSource(this), StreamResult(writer))
+
             it.outputStream().use { stream ->
-                TransformerFactory.newInstance()
-                    .newTransformer()
-                    .transform(DOMSource(this), StreamResult(stream))
+                stream.write(writer.toString().toByteArray(Charsets.UTF_8))
             }
         }
     }
