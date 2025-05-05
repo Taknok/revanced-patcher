@@ -35,9 +35,11 @@ class Document internal constructor(
             }
 
             it.outputStream().use { stream ->
-                TransformerFactory.newInstance()
-                    .newTransformer()
-                    .transform(DOMSource(this), StreamResult(stream))
+                UnicodeCorrectingWriter(stream).use { writer ->
+                    TransformerFactory.newInstance()
+                        .newTransformer()
+                        .transform(DOMSource(this), StreamResult(writer))
+                }
             }
         }
     }
