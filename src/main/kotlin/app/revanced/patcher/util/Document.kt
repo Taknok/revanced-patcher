@@ -14,12 +14,6 @@ class Document internal constructor(
     inputStream: InputStream,
 ) : Document by DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream), Closeable {
     private var file: File? = null
-    private val isAndroid = try {
-        Class.forName("android.os.Build")
-        true
-    } catch (e: ClassNotFoundException) {
-        false
-    }
 
     init {
         normalize()
@@ -41,17 +35,18 @@ class Document internal constructor(
                 readerCount.remove(it)
             }
 
-            it.outputStream().use { stream ->
+            it.outputStream().use {
                 val transformer = TransformerFactory.newInstance().newTransformer()
                 if (isAndroid) {
                     transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-16")
                 }
-                transformer.transform(DOMSource(this), StreamResult(stream))
+                transformer.transform(DOMSource(this), StreamResult(it))
             }
         }
     }
 
     private companion object {
         private val readerCount = mutableMapOf<File, Int>()
+        private val isAndroid = System.getProperty("java.runtime.name").equals("Android Runtime")
     }
 }
