@@ -4,6 +4,7 @@ import org.w3c.dom.Document
 import java.io.Closeable
 import java.io.File
 import java.io.InputStream
+import java.io.StringWriter
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
@@ -35,12 +36,21 @@ class Document internal constructor(
                 readerCount.remove(it)
             }
 
-            it.outputStream().use {
-                val transformer = TransformerFactory.newInstance().newTransformer()
+            TransformerFactory.newInstance().newTransformer().apply {
                 if (isAndroid) {
-                    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-16")
+                    val writer = StringWriter()
+
+                    setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
+                    setOutputProperty(OutputKeys.ENCODING, "UTF-16")
+                    transform(DOMSource(this@Document), StreamResult(writer))
+
+                    it.outputStream().use { stream ->
+                        stream.write(writer.toString().toByteArray(Charsets.UTF_8))
+                    }
+                } else {
+                    transform(DOMSource(this@Document), StreamResult(it))
                 }
-                transformer.transform(DOMSource(this), StreamResult(it))
+
             }
         }
     }
