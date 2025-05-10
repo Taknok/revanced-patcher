@@ -36,15 +36,18 @@ class Document internal constructor(
                 readerCount.remove(it)
             }
 
-            val transformer = TransformerFactory.newInstance().newTransformer().apply {
-                if (isAndroid) {
-                    setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
-                    setOutputProperty(OutputKeys.ENCODING, "UTF-16")
+            val transformer = TransformerFactory.newInstance().newTransformer()
+            if (isAndroid) {
+                // Set to UTF-16 to prevent surrogate pairs from being escaped to broken numeric character references.
+                transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-16")
+                // The XML declaration will have encoding="UTF-16", but we're going to write it back in UTF-8, so omit it.
+                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
+                // Use FileWriter to output the XML file in UTF-8 encoding.
+                it.writer().use { writer ->
+                    transformer.transform(DOMSource(this), StreamResult(writer))
                 }
-            }
-
-            it.writer().use { writer ->
-                transformer.transform(DOMSource(this), StreamResult(writer))
+            } else {
+                transformer.transform(DOMSource(this), StreamResult(it))
             }
         }
     }
