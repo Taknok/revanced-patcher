@@ -43,7 +43,7 @@ class Document internal constructor(
                 // The XML declaration will have encoding="UTF-16", but we're going to write it back in UTF-8, so omit it.
                 transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
                 // Use FileWriter to output the XML file in UTF-8 encoding.
-                it.writer().use { writer ->
+                it.bufferedWriter().use { writer ->
                     transformer.transform(DOMSource(this), StreamResult(writer))
                 }
             } else {
