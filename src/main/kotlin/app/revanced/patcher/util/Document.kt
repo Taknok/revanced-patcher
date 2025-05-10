@@ -36,21 +36,15 @@ class Document internal constructor(
                 readerCount.remove(it)
             }
 
-            TransformerFactory.newInstance().newTransformer().apply {
+            val transformer = TransformerFactory.newInstance().newTransformer().apply {
                 if (isAndroid) {
-                    val writer = StringWriter()
-
                     setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
                     setOutputProperty(OutputKeys.ENCODING, "UTF-16")
-                    transform(DOMSource(this@Document), StreamResult(writer))
-
-                    it.outputStream().use { stream ->
-                        stream.write(writer.toString().toByteArray(Charsets.UTF_8))
-                    }
-                } else {
-                    transform(DOMSource(this@Document), StreamResult(it))
                 }
+            }
 
+            it.writer().use { writer ->
+                transformer.transform(DOMSource(this), StreamResult(writer))
             }
         }
     }
